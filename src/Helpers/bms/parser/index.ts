@@ -25,7 +25,7 @@
 
 import * as Reader from './modules/reader';
 import * as Compiler from './modules/compiler';
-
+import DataStructure from 'data-structure';
 import { ReaderOptions } from './modules/reader/types';
 import { BMSChart } from './bms/chart';
 import { BMSHeaders } from './bms/headers';
@@ -38,7 +38,6 @@ import { ISongInfoData, SongInfo } from './modules/songInfo';
 import { Keysounds } from './modules/keySounds';
 import { Positioning, PositioningSegment } from './modules/positioning';
 import { SpacingSegment, Spacing } from './modules/spacing';
-
 export class BMSParser {
     private chart: BMSChart | null = null;
 

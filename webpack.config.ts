@@ -11,14 +11,17 @@ const isProduction = process.env.NODE_ENV == 'production';
 const stylesHandler = MiniCssExtractPlugin.loader;
 
 const config: webpack.Configuration = {
-    entry: './src/index.js',
+    entry: './src/index.tsx',
     output: {
         path: path.resolve(__dirname, 'dist'),
+        filename: 'bundle.js',
+        publicPath: '/',
     },
     devtool: 'inline-source-map',
     devServer: {
         open: true,
         host: 'localhost',
+        hot: true,
     },
     plugins: [
         new HtmlWebpackPlugin({
@@ -30,15 +33,26 @@ const config: webpack.Configuration = {
         // Add your plugins here
         // Learn more about plugins from https://webpack.js.org/configuration/plugins/
     ],
+    resolve: {
+        alias: {
+            '@src': path.resolve(__dirname, './src/'),
+        },
+        extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js', '.d.ts', '...'],
+        modules: ['src', 'node_modules', 'src/Helpers/bms/parser'],
+    },
     module: {
         rules: [
             {
-                test: /\.css$/i,
+                test: /.(sass|scss|css)$/,
                 use: [stylesHandler, 'css-loader', 'postcss-loader'],
             },
             {
-                test: /\.(js|jsx|ts|tsx)$/,
-                loader: 'swc-loader',
+                test: /\.tsx?$/,
+                exclude: /(node_modules|__tests__)/,
+                use: {
+                    // `.swcrc` can be used to configure swc
+                    loader: 'swc-loader',
+                },
             },
             {
                 test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,

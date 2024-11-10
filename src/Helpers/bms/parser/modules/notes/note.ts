@@ -1,5 +1,4 @@
 import DataStructure from 'data-structure';
-
 /** 노트차트의 개별 노트 */
 export interface BMSNote {
     beat: number;
