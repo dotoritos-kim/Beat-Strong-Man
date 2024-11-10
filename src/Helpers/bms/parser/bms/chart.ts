@@ -1,6 +1,6 @@
 import { BMSHeaders } from './headers';
 import { BMSObjects } from './objects';
-import { TimeSignatures } from '../modules/time_signatures';
+import { TimeSignatures } from '../modules/timeSignatures';
 
 /**
  * BMSChart는 특정 BMS 노트차트에 대한 정보를 담고 있습니다.
