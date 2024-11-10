@@ -1,4 +1,4 @@
-name: Extract Module and Version from PR Title
+name: Version from PR Title
 
 on:
   pull_request:
