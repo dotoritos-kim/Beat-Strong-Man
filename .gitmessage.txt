@@ -1,0 +1,27 @@
+<keyword>:<release_type>:<changelog_section>
+# [Header]
+#   형식 - <keyword>:<release_type>:<changelog_section>
+#
+# [Type] 입력 목록
+#   release:major
+#   feat:minor:Features
+#   refactor:minor:Refactoring
+#   fix:patch:Bug Fixes
+#   hotfix:patch:Hotfixes
+#   docs:patch:Documentation
+#   style:patch:Styles
+#   perf:patch:Performance Improvements
+#   test:patch:Tests
+#   ci:patch:Continuous Integration
+#   chore:patch:Chores
+#   revert:patch:Reverts
+#
+# [Title] 규칙
+#   <keyword>:<release_type>:<changelog_section>
+#   changelog_section는 선택사항
+# 
+# [Body] 작성 규칙
+#   1. 제목과 본문 사이 빈 칸 한줄 필수 (제목과 본문 분리)
+#   2. 생략 가능, 필요 시 자세한 설명 작성 (72자 내외로 마무리)
+#   3. 적용한 변경사항과 그것을 만든 이유에 대해 설명
+#      - 어떻게보다는 "무엇을", "왜"
