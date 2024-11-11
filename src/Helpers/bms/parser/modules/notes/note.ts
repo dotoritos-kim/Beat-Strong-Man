@@ -1,4 +1,5 @@
-import DataStructure from 'data-structure';
+import DataStructure, { Façade } from '@Bms/parser/utils/dataStructure';
+
 /** 노트차트의 개별 노트 */
 export interface BMSNote {
     beat: number;
@@ -20,7 +21,7 @@ export interface BMSNote {
 
 export const Note = DataStructure<BMSNote>({
     beat: 'number',
-    endBeat: DataStructure.maybe<number>('number'),
-    column: DataStructure.maybe<string>('string'),
+    endBeat: DataStructure?.maybe<number>('number'),
+    column: DataStructure?.maybe<string>('string'),
     keysound: 'string',
 });

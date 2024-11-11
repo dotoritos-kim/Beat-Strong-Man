@@ -1,6 +1,6 @@
-import DataStructure from 'data-structure';
+import DataStructure, { Façade } from '@Bms/parser/utils/dataStructure';
 
-export const Segment = DataStructure<SpeedSegment>({
+export const Segment: Façade<SpeedSegment> = DataStructure<SpeedSegment>({
     t: 'number',
     x: 'number',
     dx: 'number',

@@ -35,10 +35,11 @@ const config: webpack.Configuration = {
     ],
     resolve: {
         alias: {
-            '@src': path.resolve(__dirname, './src/'),
+            '@Src': path.resolve(__dirname, './src/'),
+            '@Bms': path.resolve(__dirname, './src/Helpers/bms/'),
         },
-        extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js', '.d.ts', '...'],
-        modules: ['src', 'node_modules', 'src/Helpers/bms/parser'],
+        extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js', '.d.ts', '...', '.json'],
+        modules: ['src', 'node_modules'],
     },
     module: {
         rules: [

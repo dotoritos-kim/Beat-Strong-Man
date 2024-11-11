@@ -112,7 +112,6 @@ export class BMSParser {
         return Notes.fromBMSChart(this.chart);
     }
 }
-
 export { Reader, Compiler };
 export type { ReaderOptions } from './modules/reader/types';
 export type { BMSNote } from './modules/notes';

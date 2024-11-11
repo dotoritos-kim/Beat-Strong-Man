@@ -21,6 +21,11 @@
         "sourceMap": true,
         "types": ["node"],
         "typeRoots": ["./node_modules/@types", "./src"],
+
+        "paths": {
+            "@Src/*": ["src/*"],
+            "@Bms/*": ["Helpers/bms/*"]
+        },
         "composite": true,
         "declaration": true,
         "declarationMap": true,
@@ -31,10 +36,5 @@
         ],
         "strictNullChecks": true
     },
-    "paths": {
-        "@src/*": ["./**/*"],
-        "data-structure": ["Helpers/bms/parser/definitions"]
-    },
-    "include": ["src/**/*", "src/**/*.d.ts", "src/**/*.ts"],
     "exclude": ["node_modules", "dist"]
 }

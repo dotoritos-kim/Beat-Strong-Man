@@ -5,7 +5,7 @@
             "tsx": true,
             "decorators": false
         },
-        "target": "es2022",
+        "target": "es2015",
         "transform": {
             "react": {
                 "pragma": "h",
@@ -15,6 +15,11 @@
                 "useBuiltins": false
             }
         }
+    },
+    "module": {
+        "type": "commonjs",
+        "strict": true,
+        "noInterop": true
     },
     "minify": true
 }
