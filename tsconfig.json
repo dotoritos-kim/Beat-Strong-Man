@@ -1,48 +1,40 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "outDir": "./dist/",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "noImplicitAny": true,
-    "baseUrl": "./src",
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "sourceMap": true,
-    "plugins": [
-      {
-        "transform": "typia/lib/transform"
-      }
-    ],
-    "strictNullChecks": true
-  },
-  "paths": {
-    "@src/*": [
-      "src/*"
-    ],
-    "@root/*": [
-      "/*"
-    ]
-  },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+    "compilerOptions": {
+        "target": "es2022",
+        "outDir": "./dist/",
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "noImplicitAny": true,
+        "baseUrl": "./src",
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noFallthroughCasesInSwitch": true,
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "sourceMap": true,
+        "types": ["node"],
+        "typeRoots": ["./node_modules/@types", "./src"],
+
+        "paths": {
+            "@Src/*": ["src/*"],
+            "@Bms/*": ["Helpers/bms/*"]
+        },
+        "composite": true,
+        "declaration": true,
+        "declarationMap": true,
+        "plugins": [
+            {
+                "transform": "typia/lib/transform"
+            }
+        ],
+        "strictNullChecks": true
+    },
+    "exclude": ["node_modules", "dist"]
 }

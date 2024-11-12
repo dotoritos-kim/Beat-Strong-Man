@@ -25,22 +25,20 @@
 
 import * as Reader from './modules/reader';
 import * as Compiler from './modules/compiler';
-
 import { ReaderOptions } from './modules/reader/types';
 import { BMSChart } from './bms/chart';
 import { BMSHeaders } from './bms/headers';
 import { BMSObjects } from './bms/objects';
 import { Speedcore } from './modules/speedcore';
-import { TimeSignatures } from './modules/time_signatures';
+import { TimeSignatures } from './modules/timeSignatures';
 import { Notes, BMSNote } from './modules/notes';
 import { Timing, TimingAction, BaseTimingAction, BPMTimingAction, StopTimingAction } from './modules/timing';
-import { ISongInfoData, SongInfo } from './modules/song_info';
-import { Keysounds } from './modules/keysounds';
+import { ISongInfoData, SongInfo } from './modules/songInfo';
+import { Keysounds } from './modules/keySounds';
 import { Positioning, PositioningSegment } from './modules/positioning';
 import { SpacingSegment, Spacing } from './modules/spacing';
-
 export class BMSParser {
-    private chart: BMSChart | null = null;
+    chart: BMSChart | null = null;
 
     /**
      * URL에서 BMS 파일을 가져와 읽습니다.
@@ -113,11 +111,10 @@ export class BMSParser {
         return Notes.fromBMSChart(this.chart);
     }
 }
-
 export { Reader, Compiler };
 export type { ReaderOptions } from './modules/reader/types';
 export type { BMSNote } from './modules/notes';
 export type { TimingAction, BaseTimingAction, BPMTimingAction, StopTimingAction } from './modules/timing';
-export type { ISongInfoData } from './modules/song_info';
+export type { ISongInfoData } from './modules/songInfo';
 export type { PositioningSegment } from './modules/positioning';
 export type { SpacingSegment } from './modules/spacing';

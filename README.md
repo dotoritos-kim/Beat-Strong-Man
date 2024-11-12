@@ -120,6 +120,33 @@ npm run test
 
 사실 크로미움 엔진에 맞는 브라우저는 다 돌아가게 끔 만들 생각입니다.
 
+## 코드 컨벤션
+
+### Naming
+
+1. 기본적으로 파일명 혹은 변수 클래스 등의 식별자는 camel case를 따른다.
+2. 이름은 최대한 의도를 밝혀 명확하게 작성한다.
+3. 상수는 scream snake case를 따른다.
+
+### Structure
+
+src 폴더가 기본 소스코드 디렉토리이며 레포지토리 혹은 인프라 세팅과 관련된 코드들만 이 상위 폴더에 작성한다.
+
+./src
+
+-   /assets: css, scss, sass 및 폰트와 정적 홈페이지 이미지와 변하지 않고 고정으로 사용될 리소스 저장
+-   /Components: 여러곳에 중복되어 사용될 작은 컴포넌트를 이곳에서 작성
+-   /json: i18n, 혹은 정적의 string 데이터를 관리할 json 파일 작성
+-   /Helpers: 시각적으로 보여주는게 없거나 모듈, 클래스, 라이브러리 형태의 기능과 소스코드들은 여기서 작성한다.
+-   /Layouts: 홈페이지의 큰 레이아웃을 작성한다. Header, Footer, Sidebar 등이 이에 속한다.
+-   /Pages: Body에 해당하는 컴포넌트들을 작성한다. 이 컴포넌트들은 Routes에서 설정하여 주소마다 각각 따로 접근 할 수 있어야한다.
+-   /Stores: 전역상태관리를 위한 스토어와 타입을 작성.
+-   App.tsx
+-   index.tsx
+-   \*.d.ts
+-   reportWebVitals.ts 등의 웹브라우저 디버거
+-   setupTests.ts
+
 ## License
 
 [GPL-2.0 license](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)

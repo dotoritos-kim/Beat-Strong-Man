@@ -6,7 +6,6 @@
 //
 import { ReaderOptions } from './types';
 import chardet from 'chardet';
-import iconv from 'iconv-lite';
 
 /**
  * 버퍼를 읽고, 문자 집합을 감지하며, 디코딩된 문자열을 동기적으로 반환합니다.
@@ -14,7 +13,9 @@ import iconv from 'iconv-lite';
  */
 export function read(buffer: Buffer, options: ReaderOptions | null = null): string {
     const charset = (options && options.forceEncoding) || chardet.detect(buffer);
-    const text = iconv.decode(buffer, charset ?? '');
+
+    let decoder = new TextDecoder(charset ?? ''); // default 'utf-8' or 'utf8'
+    const text = decoder.decode(buffer);
     if (text.charCodeAt(0) === 0xfeff) {
         return text.substr(1);
     } else {
