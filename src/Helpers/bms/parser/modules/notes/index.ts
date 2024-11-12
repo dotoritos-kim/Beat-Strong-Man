@@ -1,5 +1,5 @@
 import { Note, BMSNote } from './note';
-import invariant from 'invariant';
+import { invariant } from '@epic-web/invariant';
 import * as ChannelMapping from './channels';
 import { BMSChart } from '../../bms/chart';
 import { BMSObject } from '../../bms/objects';

@@ -6,7 +6,10 @@ import 'react18-json-view/src/style.css';
 const BMSPlayer: React.FC = () => {
     const [resourceURL, setResourceURL] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
-    const [bmsData, setBmsData] = useState<any>(null);
+    const [bmsChart, setBmsChart] = useState<any>(null);
+    const [bmsTiming, setBmsTiming] = useState<any>(null);
+    const [bmsPositioning, setBmsPositioning] = useState<any>(null);
+    const [bmsNotes, setBmsNotes] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     // 폴더 선택 이벤트 핸들러
@@ -34,7 +37,11 @@ const BMSPlayer: React.FC = () => {
             const bmsParser = new BMSParser();
 
             bmsParser.compileString(await bmsParser.fetchFromUrl(resourceURL));
-            setBmsData(bmsParser.chart);
+            bmsParser.getNotes();
+            setBmsChart(bmsParser.chart);
+            setBmsTiming(bmsParser.getTiming());
+            setBmsPositioning(bmsParser.getPositioning());
+            setBmsNotes(bmsParser.chart?.objects.all());
             setIsPlaying(true); // 재생 상태 설정
         } catch (error) {
             console.error('BMS 리소스 로드 오류:', error);
@@ -67,7 +74,18 @@ const BMSPlayer: React.FC = () => {
                 BMS 파싱 및 재생
             </button>
 
-            <JsonView src={bmsData} />
+            <div>
+                BMS Chart <JsonView src={bmsChart} />
+            </div>
+            <div>
+                BMS Timing <JsonView src={bmsTiming} />
+            </div>
+            <div>
+                BMS Position <JsonView src={bmsPositioning} />
+            </div>
+            <div>
+                BMS Notes <JsonView src={bmsNotes} />
+            </div>
         </div>
     );
 };
