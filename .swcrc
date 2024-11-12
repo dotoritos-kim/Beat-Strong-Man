@@ -5,14 +5,10 @@
             "tsx": true,
             "decorators": false
         },
-        "target": "es2015",
+        "target": "es2022",
         "transform": {
             "react": {
-                "pragma": "h",
-                "pragmaFrag": "Fragment",
-                "throwIfNamespace": true,
-                "development": false,
-                "useBuiltins": false
+                "runtime": "automatic"
             }
         }
     },

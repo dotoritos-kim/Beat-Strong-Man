@@ -15,31 +15,43 @@ const config: webpack.Configuration = {
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 'bundle.js',
-        publicPath: '/',
+        publicPath: '/', // Ensure this is set correctly for your setup
     },
     devtool: 'inline-source-map',
     devServer: {
-        open: true,
-        host: 'localhost',
         hot: true,
+        static: {
+            directory: path.join(__dirname, 'public'),
+            serveIndex: false,
+        },
+        port: 8080,
+        historyApiFallback: true, // Support for single-page applications
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: 'index.html',
+            template: 'public/index.html',
+            templateParameters: {
+                PUBLIC_URL: '', // 로컬 개발에서는 빈 문자열로 설정
+            },
         }),
-
         new MiniCssExtractPlugin(),
-
-        // Add your plugins here
-        // Learn more about plugins from https://webpack.js.org/configuration/plugins/
+        new webpack.ProvidePlugin({
+            process: 'process/browser',
+            Buffer: ['buffer', 'Buffer'],
+            'iconv-lite': 'iconv-lite',
+        }),
     ],
     resolve: {
         alias: {
+            process: 'process/browser',
             '@Src': path.resolve(__dirname, './src/'),
             '@Bms': path.resolve(__dirname, './src/Helpers/bms/'),
         },
         extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js', '.d.ts', '...', '.json'],
         modules: ['src', 'node_modules'],
+        fallback: {
+            buffer: require.resolve('buffer'),
+        },
     },
     module: {
         rules: [
@@ -48,7 +60,7 @@ const config: webpack.Configuration = {
                 use: [stylesHandler, 'css-loader', 'postcss-loader'],
             },
             {
-                test: /\.tsx?$/,
+                test: /\.(js|jsx|ts|tsx)$/,
                 exclude: /(node_modules|__tests__)/,
                 use: {
                     // `.swcrc` can be used to configure swc
@@ -56,12 +68,9 @@ const config: webpack.Configuration = {
                 },
             },
             {
-                test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
-                type: 'asset',
+                test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/i,
+                loader: 'file-loader',
             },
-
-            // Add your rules for custom modules here
-            // Learn more about loaders from https://webpack.js.org/loaders/
         ],
     },
 };

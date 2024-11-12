@@ -25,7 +25,6 @@
 
 import * as Reader from './modules/reader';
 import * as Compiler from './modules/compiler';
-import DataStructure from 'data-structure';
 import { ReaderOptions } from './modules/reader/types';
 import { BMSChart } from './bms/chart';
 import { BMSHeaders } from './bms/headers';
@@ -39,7 +38,7 @@ import { Keysounds } from './modules/keySounds';
 import { Positioning, PositioningSegment } from './modules/positioning';
 import { SpacingSegment, Spacing } from './modules/spacing';
 export class BMSParser {
-    private chart: BMSChart | null = null;
+    chart: BMSChart | null = null;
 
     /**
      * URL에서 BMS 파일을 가져와 읽습니다.
