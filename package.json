@@ -29,6 +29,7 @@
         ]
     },
     "dependencies": {
+        "@apigames/highres-timer": "^24.1.5",
         "@epic-web/invariant": "^1.0.0",
         "@react-three/drei": "^9.115.0",
         "@react-three/fiber": "^8.17.10",
@@ -46,12 +47,14 @@
         "envify": "^4.1.0",
         "leva": "^0.9.35",
         "lodash": "^4.17.21",
+        "path-browserify": "^1.0.1",
         "pizzicato": "^0.6.4",
         "process": "^0.11.10",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-router-dom": "^6.28.0",
         "react18-json-view": "^0.2.8",
+        "reactstrap": "^9.2.3",
         "three": "^0.170.0",
         "typia": "^6.11.3",
         "web-vitals": "^2.1.4",

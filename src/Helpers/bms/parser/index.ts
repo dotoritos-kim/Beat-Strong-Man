@@ -34,7 +34,7 @@ import { TimeSignatures } from './modules/timeSignatures';
 import { Notes, BMSNote } from './modules/notes';
 import { Timing, TimingAction, BaseTimingAction, BPMTimingAction, StopTimingAction } from './modules/timing';
 import { ISongInfoData, SongInfo } from './modules/songInfo';
-import { Keysounds } from './modules/keySounds';
+import { KeySounds } from './modules/keySounds';
 import { Positioning, PositioningSegment } from './modules/positioning';
 import { SpacingSegment, Spacing } from './modules/spacing';
 export class BMSParser {
@@ -110,8 +110,17 @@ export class BMSParser {
         if (!this.chart) return null;
         return Notes.fromBMSChart(this.chart);
     }
+
+    /**
+     * 키음을 반환합니다.
+     * @returns KeySounds 객체
+     */
+    getKeySounds(): KeySounds | null {
+        if (!this.chart) return null;
+        return KeySounds.fromBMSChart(this.chart);
+    }
 }
-export { Reader, Compiler };
+export { Reader, Compiler, KeySounds, Timing, SongInfo, Positioning, Spacing, BMSChart, Notes, TimeSignatures };
 export type { ReaderOptions } from './modules/reader/types';
 export type { BMSNote } from './modules/notes';
 export type { TimingAction, BaseTimingAction, BPMTimingAction, StopTimingAction } from './modules/timing';

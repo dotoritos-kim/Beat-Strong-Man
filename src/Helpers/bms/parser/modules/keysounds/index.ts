@@ -13,7 +13,7 @@ import { BMSChart } from '../../bms/chart';
  * 그런 다음 `.get()`을 사용해 파일 이름을 가져올 수 있습니다:
  *
  */
-export class Keysounds {
+export class KeySounds {
     _map: { [id: string]: string };
     constructor(map: { [id: string]: string }) {
         this._map = map;
@@ -57,6 +57,6 @@ export class Keysounds {
             if (!match) return;
             map[match[1].toLowerCase()] = value;
         });
-        return new Keysounds(map);
+        return new KeySounds(map);
     }
 }

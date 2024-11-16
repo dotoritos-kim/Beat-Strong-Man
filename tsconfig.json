@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "es2022",
         "outDir": "./dist/",
-        "lib": ["dom", "dom.iterable", "esnext"],
+        "lib": ["dom", "dom.iterable", "esnext", "WebWorker"],
         "noImplicitAny": true,
         "baseUrl": "./src",
         "allowJs": true,
@@ -21,7 +21,6 @@
         "sourceMap": true,
         "types": ["node"],
         "typeRoots": ["./node_modules/@types", "./src"],
-
         "paths": {
             "@Src/*": ["src/*"],
             "@Bms/*": ["Helpers/bms/*"]

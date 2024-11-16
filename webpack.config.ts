@@ -44,6 +44,7 @@ const config: webpack.Configuration = {
     resolve: {
         alias: {
             process: 'process/browser',
+            path: require.resolve('path-browserify'),
             '@Src': path.resolve(__dirname, './src/'),
             '@Bms': path.resolve(__dirname, './src/Helpers/bms/'),
         },
@@ -68,7 +69,7 @@ const config: webpack.Configuration = {
                 },
             },
             {
-                test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/i,
+                test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2|glb)$/i,
                 loader: 'file-loader',
             },
         ],

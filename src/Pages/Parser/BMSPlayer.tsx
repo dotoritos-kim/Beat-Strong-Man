@@ -3,12 +3,13 @@ import { isArray } from 'lodash';
 import React, { useState, useRef } from 'react';
 import JsonView from 'react18-json-view';
 import 'react18-json-view/src/style.css';
-const BMSPlayer: React.FC = () => {
+const BMSPlayer = () => {
     const [resourceURL, setResourceURL] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
     const [bmsChart, setBmsChart] = useState<any>(null);
     const [bmsTiming, setBmsTiming] = useState<any>(null);
     const [bmsPositioning, setBmsPositioning] = useState<any>(null);
+    const [bmsKeySounds, setBmsKeySounds] = useState<any>(null);
     const [bmsNotes, setBmsNotes] = useState<any>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -41,6 +42,7 @@ const BMSPlayer: React.FC = () => {
             setBmsChart(bmsParser.chart);
             setBmsTiming(bmsParser.getTiming());
             setBmsPositioning(bmsParser.getPositioning());
+            setBmsKeySounds(bmsParser.getKeySounds());
             setBmsNotes(bmsParser.chart?.objects.all());
             setIsPlaying(true); // 재생 상태 설정
         } catch (error) {
@@ -82,6 +84,9 @@ const BMSPlayer: React.FC = () => {
             </div>
             <div>
                 BMS Position <JsonView src={bmsPositioning} />
+            </div>
+            <div>
+                BMS KeySounds <JsonView src={bmsKeySounds} />
             </div>
             <div>
                 BMS Notes <JsonView src={bmsNotes} />
