@@ -41,6 +41,7 @@
         "@types/pizzicato": "^0.6.4",
         "@types/three": "^0.169.0",
         "@types/webrtc": "^0.0.44",
+        "bindings": "^1.5.0",
         "bootstrap": "^5.3.3",
         "browserify": "^17.0.1",
         "chardet": "^2.0.0",
@@ -57,6 +58,7 @@
         "reactstrap": "^9.2.3",
         "three": "^0.170.0",
         "typia": "^6.11.3",
+        "uuid": "^11.0.3",
         "web-vitals": "^2.1.4",
         "zustand": "^5.0.1"
     },

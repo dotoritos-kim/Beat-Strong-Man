@@ -5,11 +5,11 @@ class WorkerHandler {
     }
 
     private processKeydown(data: WorkerMessage): void {
-        const { key, startTime } = data;
+        const { key, startTime, simultaneousKeys } = data;
         const result = `${key} 키 입력 감지됨 (Worker)`;
 
         // Web Worker의 결과와 시작 시간을 메인 스레드로 전송
-        self.postMessage({ result, startTime } as WorkerResponse);
+        self.postMessage({ result, startTime, simultaneousKeys } as WorkerResponse);
     }
 }
 
@@ -17,11 +17,13 @@ class WorkerHandler {
 interface WorkerMessage {
     key: string;
     startTime: number;
+    simultaneousKeys: Map<string, boolean>;
 }
 
 interface WorkerResponse {
     result: string;
     startTime: number;
+    simultaneousKeys: Map<string, boolean>;
 }
 
 // Web Worker 인스턴스 생성
