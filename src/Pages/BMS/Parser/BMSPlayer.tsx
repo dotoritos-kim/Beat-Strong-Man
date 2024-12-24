@@ -1,17 +1,38 @@
 import { BMSParser } from '@Bms/parser';
-import { isArray } from 'lodash';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { AudioPreloader } from '@Bms/audio/loader/AudioPreloader';
+
 import JsonView from 'react18-json-view';
 import 'react18-json-view/src/style.css';
+import { AudioLoadWorker } from '@Bms/audio/loader/AudioLoader.worker';
+import { removeFileName } from 'Helpers/functions';
+import { fromBMSChart } from '@Bms/audio/judgements/NoteLoader';
+import { BmsContext } from '../BmsContext';
+
 const BMSPlayer = () => {
-    const [resourceURL, setResourceURL] = useState('');
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [bmsChart, setBmsChart] = useState<any>(null);
-    const [bmsTiming, setBmsTiming] = useState<any>(null);
-    const [bmsPositioning, setBmsPositioning] = useState<any>(null);
-    const [bmsKeySounds, setBmsKeySounds] = useState<any>(null);
-    const [bmsNotes, setBmsNotes] = useState<any>(null);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const bmsContext = useContext(BmsContext);
+    if (!bmsContext) {
+        throw new Error('SomeComponent must be used within a BmsProvider');
+    }
+    const {
+        isPlaying,
+        setIsPlaying,
+        bmsChart,
+        setBmsChart,
+        preloader,
+        resourceURL,
+        setResourceURL,
+        setBmsTiming,
+        setBmsPositioning,
+        setBmsKeySounds,
+        setBmsNotes,
+        setBmsNoteLoader,
+        bmsKeySounds,
+        setPreloader,
+        fileInputRef,
+        bmsNoteLoader,
+        setBmsAutos,
+    } = bmsContext;
 
     // 폴더 선택 이벤트 핸들러
     const handleFolderSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,14 +57,20 @@ const BMSPlayer = () => {
 
         try {
             const bmsParser = new BMSParser();
-
-            bmsParser.compileString(await bmsParser.fetchFromUrl(resourceURL));
+            const chart = await bmsParser.fetchFromUrl(resourceURL);
+            const bms = bmsParser.compileString(chart);
             bmsParser.getNotes();
             setBmsChart(bmsParser.chart);
             setBmsTiming(bmsParser.getTiming());
             setBmsPositioning(bmsParser.getPositioning());
-            setBmsKeySounds(bmsParser.getKeySounds());
+
             setBmsNotes(bmsParser.chart?.objects.all());
+            const data = fromBMSChart(bms, {
+                scratch: 'left',
+            });
+            setBmsKeySounds(data.keysounds);
+            setBmsNoteLoader(data.notes);
+            setBmsAutos(data.autos);
             setIsPlaying(true); // 재생 상태 설정
         } catch (error) {
             console.error('BMS 리소스 로드 오류:', error);
@@ -51,6 +78,27 @@ const BMSPlayer = () => {
         }
     };
 
+    async function audioLoad() {
+        if (bmsKeySounds && resourceURL) {
+            console.log('모든 오디오 로딩 시작!');
+            const preloader = new AudioPreloader(removeFileName(resourceURL), bmsKeySounds, AudioLoadWorker);
+            setPreloader(preloader);
+
+            try {
+                await preloader.loadAll();
+                await preloader.decodeAll();
+            } catch (err) {
+                console.error('Audio loading error:', err);
+            }
+            console.log('모든 오디오 로딩 완료!');
+        }
+    }
+    useEffect(() => {
+        if (bmsKeySounds && resourceURL) {
+            audioLoad();
+        }
+    }, [bmsKeySounds]);
+    //https://bms.dotoritos.net/bms/[ginkiha]%20EOS/_eos_[LN]_l.bml
     return (
         <div style={{ padding: '20px', textAlign: 'center' }}>
             <h2>BMS Player</h2>
@@ -66,30 +114,21 @@ const BMSPlayer = () => {
                 <input
                     type="text"
                     placeholder="URL 입력"
-                    value={resourceURL}
+                    value={resourceURL ?? ''}
                     onChange={handleURLChange}
                     style={{ padding: '8px', width: '80%' }}
                 />
             </div>
 
             <button onClick={loadAndParseBMS} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-                BMS 파싱 및 재생
+                BMS 파싱
             </button>
 
             <div>
-                BMS Chart <JsonView src={bmsChart} />
-            </div>
-            <div>
-                BMS Timing <JsonView src={bmsTiming} />
-            </div>
-            <div>
-                BMS Position <JsonView src={bmsPositioning} />
+                BMS NoteLoader <JsonView src={bmsNoteLoader} />
             </div>
             <div>
                 BMS KeySounds <JsonView src={bmsKeySounds} />
-            </div>
-            <div>
-                BMS Notes <JsonView src={bmsNotes} />
             </div>
         </div>
     );

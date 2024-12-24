@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import { Notechart } from '@Bms/audio/judgements/index';
 import { PlayerOptions, NotechartInput, ExpertJudgmentWindow } from '@Bms/audio/judgements/types';
 import { BMSChart, BMSNote, KeySounds, Notes, Positioning, SongInfo, Spacing, Timing } from '@Bms/parser';

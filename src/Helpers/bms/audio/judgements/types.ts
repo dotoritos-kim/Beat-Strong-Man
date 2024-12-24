@@ -50,6 +50,7 @@ export interface GameEvent {
 
 /** 사운드가 있는 이벤트 인터페이스 */
 export interface SoundedEvent extends GameEvent {
+    used?: boolean;
     keysound: string; // 해당 이벤트의 키 사운드
     keysoundStart?: number; // 키 사운드 시작 위치 (옵션)
     keysoundEnd?: number; // 키 사운드 종료 위치 (옵션)

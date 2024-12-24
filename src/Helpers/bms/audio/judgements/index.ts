@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import * as _ from 'lodash';
 import * as BMS from '@Bms/parser/index';
 import { invariant } from '@epic-web/invariant';
 import {

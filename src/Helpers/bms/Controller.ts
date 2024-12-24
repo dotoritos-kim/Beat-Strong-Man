@@ -15,9 +15,11 @@ export class GameController {
 
     public _message: string = '';
     public _workerMessage: string = '';
-    gameProgressCallback: (message: string, keys: string[]) => void;
-    constructor(callBack: (message: string, keys: string[]) => void) {
-        this.gameProgressCallback = callBack;
+    gameInputCallback: (message: string, keys: string[]) => void;
+    gameProgressCallback: () => void;
+    constructor(inputCallBack: (message: string, keys: string[]) => void, progressCallback: () => void) {
+        this.gameInputCallback = inputCallBack;
+        this.gameProgressCallback = progressCallback;
         this._inputThread = new MainThread((e, keys) => {
             this.getInput(e, keys);
         });
@@ -30,7 +32,7 @@ export class GameController {
         this._workerMessage = e;
         this.inputKeys = keys;
         Timer.end('down');
-        this.gameProgressCallback(e, keys);
+        this.gameInputCallback(e, keys);
     }
 
     start() {
@@ -75,6 +77,7 @@ export class GameController {
 
     _update() {
         this._nowTime = elapsedTime(this._startTime!);
+        this.gameProgressCallback();
     }
 }
 
