@@ -119,6 +119,60 @@ export class BMSParser {
         if (!this.chart) return null;
         return KeySounds.fromBMSChart(this.chart);
     }
+    calculateTotalPlayTime(): number {
+        if (this.chart) {
+            const bpmMap: { [key: string]: number } = {};
+            let defaultBpm = 120; // 기본 BPM
+            let totalTime = 0;
+
+            // 1. 헤더에서 BPM 정보 가져오기
+            const bpmHeader = this.chart.headers.get('bpm');
+            if (bpmHeader) {
+                defaultBpm = parseFloat(bpmHeader);
+            }
+
+            this.chart.headers.each((key, value) => {
+                if (key.toLowerCase().startsWith('bpm')) {
+                    const bpmKey = key.slice(3);
+                    bpmMap[bpmKey] = parseFloat(value);
+                }
+            });
+
+            // 2. 모든 객체를 시간 순으로 정렬
+            const objects = this.chart.objects.allSorted();
+            let currentBpm = defaultBpm;
+            let previousBeat = 0;
+
+            for (const obj of objects) {
+                const currentBeat = obj.measure + obj.fraction; // 마디 + 세분화된 위치
+
+                // 마디 간의 시간을 계산
+                const deltaBeat = currentBeat - previousBeat;
+                const deltaTime = (deltaBeat * 240) / currentBpm;
+                totalTime += deltaTime;
+
+                previousBeat = currentBeat;
+
+                // BPM 변경 처리
+                if (obj.channel === '03') {
+                    const bpmKey = obj.value.slice(0, 2);
+                    if (bpmMap[bpmKey]) {
+                        currentBpm = bpmMap[bpmKey];
+                    }
+                }
+
+                // STOP 명령 처리
+                if (obj.channel === '09') {
+                    const stopValue = parseInt(obj.value, 10) / 192; // STOP은 192틱 단위
+                    totalTime += stopValue;
+                }
+            }
+
+            return totalTime * 1000;
+        } else {
+            return 0;
+        }
+    }
 }
 export { Reader, Compiler, KeySounds, Timing, SongInfo, Positioning, Spacing, BMSChart, Notes, TimeSignatures };
 export type { ReaderOptions } from './modules/reader/types';

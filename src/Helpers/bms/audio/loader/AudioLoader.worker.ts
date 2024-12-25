@@ -24,9 +24,8 @@ export function AudioLoaderWorker() {
             for (const [key, fileName] of entries) {
                 try {
                     const url = `${baseUrl}/${fileName}`;
-                    console.log(`[Worker] Fetch start: key=${key}, url=${url}`);
 
-                    const response = await fetch(url);
+                    const response = await fetch(url, { cache: 'force-cache' });
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status} - ${response.statusText}`);
                     }

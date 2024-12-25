@@ -5,7 +5,8 @@ import * as webpack from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import 'webpack-dev-server';
-
+import WasmPackPlugin from '@wasm-tool/wasm-pack-plugin';
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const isProduction = process.env.NODE_ENV == 'production';
 
 const stylesHandler = MiniCssExtractPlugin.loader;
@@ -46,6 +47,7 @@ const config: webpack.Configuration = {
             process: 'process/browser',
             path: require.resolve('path-browserify'),
             '@Src': path.resolve(__dirname, './src/'),
+            '@Asm': path.resolve(__dirname, './src/Asm/'),
             '@Bms': path.resolve(__dirname, './src/Helpers/bms/'),
         },
         extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js', '.d.ts', '...', '.json'],
@@ -61,6 +63,10 @@ const config: webpack.Configuration = {
                 use: [stylesHandler, 'css-loader', 'postcss-loader'],
             },
             {
+                test: /\.wasm$/,
+                type: 'webassembly/async',
+            },
+            {
                 test: /\.(js|jsx|ts|tsx)$/,
                 exclude: /(node_modules|__tests__)/,
                 use: {
@@ -73,6 +79,9 @@ const config: webpack.Configuration = {
                 loader: 'file-loader',
             },
         ],
+    },
+    experiments: {
+        asyncWebAssembly: true,
     },
 };
 

@@ -20,8 +20,8 @@ const Index = () => {
     return (
         <>
             {domLoaded && (
-                <LoginProvider>
-                    <BmsProvider>
+                <BmsProvider>
+                    <LoginProvider>
                         <Routes>
                             <Route element={<IndexPage />}>
                                 <Route
@@ -37,17 +37,17 @@ const Index = () => {
                                 </Route>
                             </Route>
                         </Routes>
-                    </BmsProvider>
-                    <Routes>
-                        <Route element={<IndexPage />}>
-                            <Route element={<PrivateRoute authentication={true} subscribeCheck={false} />}>
-                                {availableAuthRoutesPath.map((route, idx) => (
-                                    <Route path={route.path} element={route.component} key={idx} />
-                                ))}
+                        <Routes>
+                            <Route element={<IndexPage />}>
+                                <Route element={<PrivateRoute authentication={true} subscribeCheck={false} />}>
+                                    {availableAuthRoutesPath.map((route, idx) => (
+                                        <Route path={route.path} element={route.component} key={idx} />
+                                    ))}
+                                </Route>
                             </Route>
-                        </Route>
-                    </Routes>
-                </LoginProvider>
+                        </Routes>
+                    </LoginProvider>
+                </BmsProvider>
             )}
         </>
     );

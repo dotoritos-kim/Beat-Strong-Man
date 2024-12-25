@@ -1,69 +1,116 @@
 import { elapsedTime, HighresTimeType, startTime } from '@apigames/highres-timer';
 import { MainThread } from './input/index';
 import { Timer } from 'Helpers/timer';
-// The GameController takes care of communications between each game
-// component, and takes care of the Game loop.
+import { AudioPreloader, FileMap } from './audio/loader/AudioPreloader';
+import { PlayerAudio } from './audio/loader/AudioPlayer';
+import { millisToMinutesAndSeconds, millisToSeconds, removeFileName } from 'Helpers/functions';
+import { GameNote, SoundedEvent } from './audio/judgements';
+import { throttle } from 'lodash';
+import { RAFMonitor } from './monitor/RAFMonitor';
+
+export interface AudioSettingOptions {
+    baseUrl: string;
+    fileMap: FileMap;
+    workerUrl: string;
+    notes: GameNote[];
+    autos: SoundedEvent[];
+    gameLoaderCallback: (type: string, message: string) => void;
+}
+
+export interface PlayOptions {
+    isAutoPlay: boolean; //자동 재생 되어야하는 키 사운드 ON OFF
+    isKeySoundAutoPlay: boolean; // 노트 키사운드 자동재생 ON OFF
+    gameInputCallback: (message: string, keys: string[]) => void;
+    gameProgressCallback: () => void;
+}
+
 export class GameController {
+    rafMonitor = new RAFMonitor();
     private _endGameLoop!: () => boolean;
+    private intervalId: number | undefined;
     public _inputThread: MainThread;
     public inputKeys: string[] = [];
 
     public _startTime: HighresTimeType | undefined;
     public _startDate: Date | undefined;
     public _nowTime: number | undefined;
+    public _nowSec: string | undefined;
     public _stopTime: number | undefined;
 
     public _message: string = '';
     public _workerMessage: string = '';
-    gameInputCallback: (message: string, keys: string[]) => void;
-    gameProgressCallback: () => void;
-    constructor(inputCallBack: (message: string, keys: string[]) => void, progressCallback: () => void) {
-        this.gameInputCallback = inputCallBack;
-        this.gameProgressCallback = progressCallback;
+
+    public _audioPreloader: AudioPreloader | undefined;
+    public _playerAudio: PlayerAudio | undefined;
+
+    public audioPreloaderMessage: string = '';
+    public isAudioReady: boolean = false;
+
+    public isAutoPlay: boolean = false;
+    public isKeySoundAutoPlay: boolean = false;
+
+    gameInputCallback: ((message: string, keys: string[]) => void) | undefined;
+    gameProgressCallback: (() => void) | undefined;
+    gameLoaderCallback: ((type: string, payload: any) => void) | undefined;
+
+    constructor() {
         this._inputThread = new MainThread((e, keys) => {
             this.getInput(e, keys);
         });
+
+        this.rafMonitor.startMonitoring(100);
+        this._setupVisibilityChangeListener();
+    }
+
+    async audioSetting(options: AudioSettingOptions) {
+        this.gameLoaderCallback = options.gameLoaderCallback;
+        this._audioPreloader = new AudioPreloader(
+            removeFileName(options.baseUrl),
+            options.fileMap,
+            options.workerUrl,
+            this.gameLoaderCallback,
+        );
+        this._playerAudio = new PlayerAudio(options.notes, options.autos, this._audioPreloader);
+        await this._audioPreloader.loadAll();
+        await this._audioPreloader.decodeAll();
+        await this._audioPreloader.initAudioWorklet('AudioWorkletProcessor.js');
+        if (this._audioPreloader.isWorkerDone) {
+            this.isAudioReady = true;
+        }
     }
 
     getInput(e: string, keys: string[]) {
-        const tmpDate = new Date(this._startDate!.getTime() + this._nowTime!);
-
-        this._message = `[${tmpDate} .${tmpDate.getMilliseconds()}ms] 입력된 키: ${JSON.stringify(keys)}`;
-        this._workerMessage = e;
-        this.inputKeys = keys;
-        Timer.end('down');
-        this.gameInputCallback(e, keys);
+        if (this._startDate && this.gameInputCallback) {
+            const tmpDate = new Date(this._startDate!.getTime() + this._nowTime!);
+            this._message = `[${tmpDate} .${tmpDate.getMilliseconds()}ms] 입력된 키: ${JSON.stringify(keys)}`;
+            this._workerMessage = e;
+            this.inputKeys = keys;
+            Timer.end('down');
+            this.gameInputCallback(e, keys);
+        }
     }
 
-    start() {
+    start(playOptions: PlayOptions) {
+        this.gameInputCallback = playOptions.gameInputCallback;
+        this.gameProgressCallback = playOptions.gameProgressCallback;
+        this.isAutoPlay = playOptions.isAutoPlay;
+        this.isKeySoundAutoPlay = playOptions.isKeySoundAutoPlay;
+
         this._startTime = startTime();
-        const tmpDate = new Date(); // 현재 시간
-        tmpDate.setMilliseconds(0); // 밀리초를 0으로 초기화
-        tmpDate.setSeconds(0, 0); // 초와 밀리초를 0으로 초기화
-
-        // 1. 밀리초와 나노초 값 (예제 값)
-        const milliSecAdd = this._startTime[0]; // 밀리초
-        const nanoAdd = this._startTime[1]; // 나노초
-
-        // 2. 밀리초 추가
-        tmpDate.setMilliseconds(tmpDate.getMilliseconds() + milliSecAdd);
-
-        // 3. 나노초 추가 (밀리초 이하를 추가)
-        const nanoRemainder = nanoAdd % 1_000_000; // 나노초 중 밀리초 이하
-        const nanoToMilliseconds = Math.floor(nanoAdd / 1_000_000); // 밀리초로 변환
-        tmpDate.setMilliseconds(tmpDate.getMilliseconds() + nanoToMilliseconds); // 밀리초 추가
+        const tmpDate = new Date();
+        tmpDate.setMilliseconds(0);
+        tmpDate.setSeconds(0, 0);
+        const milliSecAdd = this._startTime[0];
+        const nanoAdd = this._startTime[1];
+        const nanoToMilliseconds = Math.floor(nanoAdd / 1_000_000);
+        tmpDate.setMilliseconds(tmpDate.getMilliseconds() + milliSecAdd + nanoToMilliseconds);
 
         this._startDate = tmpDate;
-        console.log(`Final Date: ${tmpDate} ${nanoRemainder}ns`);
-        let stopped = false;
-        const frame = () => {
-            if (stopped) return;
-            this._update();
-            requestAnimationFrame(frame);
-        };
-        requestAnimationFrame(frame);
+        console.log(`Final Date: ${tmpDate}`);
+
+        this._runGameLoop();
         this._endGameLoop = () => {
-            stopped = true;
+            if (this.intervalId) clearInterval(this.intervalId);
             if (this._startTime) this._stopTime = elapsedTime(this._startTime);
             console.log(this._stopTime);
             return true;
@@ -73,11 +120,60 @@ export class GameController {
     destroy() {
         this._endGameLoop();
         this._inputThread.terminateWorker();
+        if (this._playerAudio) this._playerAudio?.resetUsedNotes();
+        if (this._audioPreloader) this._audioPreloader.releaseAllResources();
+        this.audioPreloaderMessage = '';
+        this.isAudioReady = false;
+        this.isAutoPlay = false;
+        this.isKeySoundAutoPlay = false;
+        this._startTime = undefined;
+        this._startDate = undefined;
+        this._nowTime = undefined;
+        this._nowSec = undefined;
+        this._stopTime = undefined;
     }
 
-    _update() {
+    private _update() {
         this._nowTime = elapsedTime(this._startTime!);
-        this.gameProgressCallback();
+        if (this.gameProgressCallback) this.gameProgressCallback();
+
+        const play = throttle(() => {
+            if (this._playerAudio && this.isAudioReady && this._nowTime) {
+                if (this.isAutoPlay) this._playerAudio.playAutoKeySound(millisToSeconds(this._nowTime));
+                if (this.isKeySoundAutoPlay) this._playerAudio.playAutoNoteKeySound(millisToSeconds(this._nowTime));
+                this._nowSec = millisToMinutesAndSeconds(this._nowTime);
+            }
+        }, 10);
+        play();
+    }
+
+    private _runGameLoop() {
+        const frame = () => {
+            this._update();
+            if (document.visibilityState === 'visible') {
+                requestAnimationFrame(frame);
+            }
+        };
+        const intervalUpdate = () => {
+            if (document.visibilityState !== 'visible') {
+                this._update();
+            }
+        };
+
+        if (document.visibilityState === 'visible') {
+            requestAnimationFrame(frame);
+        } else {
+            this.intervalId = setInterval(intervalUpdate, 16) as unknown as number;
+        }
+    }
+
+    private _setupVisibilityChangeListener() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                if (this.intervalId) clearInterval(this.intervalId);
+                this._runGameLoop();
+            }
+        });
     }
 }
 

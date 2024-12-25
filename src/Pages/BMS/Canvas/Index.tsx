@@ -24,9 +24,10 @@ import { Timer } from 'Helpers/timer';
 import { v4 as uuidv4 } from 'uuid';
 import JsonView from 'react18-json-view';
 import { millisToMinutesAndSeconds, millisToSeconds } from 'Helpers/functions';
-import { BmsContext, log } from '../BmsContext';
+import { BmsContext, Log } from '../BmsContext';
 import { PlayerAudio } from '@Bms/audio/loader/AudioPlayer';
 import { throttle } from 'lodash';
+import RhythmCanvas from 'Components/notes';
 const BMSParser = (
     props: JSX.IntrinsicAttributes &
         Omit<
@@ -60,92 +61,78 @@ const BMSParser = (
     }
     const {
         controller,
+        setIsPlaying,
         setController,
         logger,
         setLogger,
-        nowTime,
-        setNowTime,
         bmsNotes,
         isPlaying,
         bmsAutos,
-        preloader,
-        playerAudio,
         bmsKeySounds,
-        bmsNoteLoader,
-        setPlayerAudio,
+        resourceURL,
+        setNowTime,
+        playTime,
+        setIsAutoPlay,
+        setIsKeySoundAutoPlay,
+        isAutoPlay,
+        isKeySoundAutoPlay,
+        destroyGame,
+        startGame,
+        nowTime,
     } = bmsContext;
-    const gameInput = useCallback(
-        (message: string, keys: string[]) => {
-            if (controller) {
-                const tmp: log = {
-                    message: controller._message,
-                    worker: controller._workerMessage,
-                    date: controller._startDate!.toISOString(),
-                    now: new Date(controller._startDate!.getTime() + controller._nowTime!).toISOString(),
-                    log: Timer.log,
-                    warn: Timer.warningLog,
-                };
-                setLogger(tmp);
-            }
-        },
-        [controller],
-    );
-    const gameProgress = useCallback(
-        throttle(() => {
-            if (controller && controller._nowTime) {
-                setNowTime(millisToMinutesAndSeconds(controller._nowTime));
-            }
-            if (controller && controller._nowTime && playerAudio) {
-                playerAudio.playAutoKeySound(millisToSeconds(controller._nowTime));
-                playerAudio.playAutoNoteKeySound(millisToSeconds(controller._nowTime));
-            }
-        }, 10),
-        [controller, playerAudio],
-    );
+
     const scrollRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' });
-    }, [scrollRef, logger, scrollRef.current]);
-
-    const gameStart = () => {
-        if (preloader) {
-            const init = new GameController(gameInput, gameProgress);
-            const player = new PlayerAudio(bmsNoteLoader, bmsAutos, preloader, bmsKeySounds);
-            setPlayerAudio(player);
-            setController(init);
-        }
-    };
+    }, [scrollRef, logger, scrollRef.current, controller]);
 
     useEffect(() => {
-        if (controller) {
-            controller.gameInputCallback = gameInput;
-            controller.gameProgressCallback = gameProgress;
-            controller.start();
+        if (playTime && controller && controller._nowTime && playTime > controller._nowTime) {
+            destroyGame();
         }
-        return () => {
-            if (controller) controller.destroy();
-        };
-    }, [controller]);
+    }, [playTime, controller]);
+
     return (
         <>
             <button
                 onClick={() => {
-                    gameStart();
+                    if (isPlaying === false) {
+                        startGame();
+                        setIsPlaying(true);
+                    } else {
+                        controller!.destroy();
+                        setIsPlaying(false);
+                    }
                 }}
                 style={{ padding: '10px 20px', cursor: 'pointer' }}
             >
-                BMS 실행
+                {isPlaying === false ? `BMS 실행` : `BMS 초기화`}
             </button>
-            <div ref={scrollRef}>
-                <div>{nowTime}</div>
-                <div>{logger.message}</div>
-                <div>{logger.worker}</div>
-                <div>{logger.date}</div>
-                <div>{logger.now}</div>
-                <div>
-                    로그: <JsonView src={[...logger.log.values().toArray()]} collapseObjectsAfterLength={10000} />
-                </div>
+            <div className="checkbox">
+                <input
+                    type="checkbox"
+                    id={'isAutoPlay'}
+                    checked={isAutoPlay}
+                    onChange={(e) => {
+                        setIsAutoPlay(e.target.checked);
+                        return;
+                    }}
+                />
+                <label htmlFor={'isAutoPlay'}>isAutoPlay</label>
             </div>
+            <div className="checkbox">
+                <input
+                    type="checkbox"
+                    id={'isKeySoundAutoPlay'}
+                    checked={isKeySoundAutoPlay}
+                    onChange={(e) => {
+                        setIsKeySoundAutoPlay(e.target.checked);
+                        return;
+                    }}
+                />
+                <label htmlFor={'isKeySoundAutoPlay'}>isKeySoundAutoPlay</label>
+            </div>
+            <div ref={scrollRef}>{controller ? <div>{nowTime}</div> : null}</div>
         </>
     );
 };

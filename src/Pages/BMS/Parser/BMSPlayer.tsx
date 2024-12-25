@@ -1,5 +1,5 @@
 import { BMSParser } from '@Bms/parser';
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { AudioPreloader } from '@Bms/audio/loader/AudioPreloader';
 
 import JsonView from 'react18-json-view';
@@ -7,8 +7,12 @@ import 'react18-json-view/src/style.css';
 import { AudioLoadWorker } from '@Bms/audio/loader/AudioLoader.worker';
 import { removeFileName } from 'Helpers/functions';
 import { fromBMSChart } from '@Bms/audio/judgements/NoteLoader';
-import { BmsContext } from '../BmsContext';
-
+import { BmsContext, Log } from '../BmsContext';
+import { Timer } from 'Helpers/timer';
+import GameController from '@Bms/Controller';
+import { throttle } from 'lodash';
+import { millisToMinutesAndSeconds, millisToSeconds } from 'Helpers/functions';
+import RhythmCanvas from 'Components/notes';
 const BMSPlayer = () => {
     const bmsContext = useContext(BmsContext);
     if (!bmsContext) {
@@ -19,19 +23,26 @@ const BMSPlayer = () => {
         setIsPlaying,
         bmsChart,
         setBmsChart,
-        preloader,
         resourceURL,
         setResourceURL,
         setBmsTiming,
         setBmsPositioning,
         setBmsKeySounds,
         setBmsNotes,
-        setBmsNoteLoader,
         bmsKeySounds,
-        setPreloader,
         fileInputRef,
-        bmsNoteLoader,
         setBmsAutos,
+        controller,
+        setController,
+        setLogger,
+        logger,
+        bmsAutos,
+        bmsNotes,
+        playTime,
+        setPlayTime,
+        loadingMessage,
+        configureGame,
+        parseBMS,
     } = bmsContext;
 
     // 폴더 선택 이벤트 핸들러
@@ -48,59 +59,18 @@ const BMSPlayer = () => {
         setResourceURL(event.target.value);
     };
 
-    // BMS 데이터 로드 및 파싱 함수
-    const loadAndParseBMS = async () => {
-        if (!resourceURL) {
-            alert('폴더를 선택하거나 URL을 입력하세요.');
-            return;
-        }
-
-        try {
-            const bmsParser = new BMSParser();
-            const chart = await bmsParser.fetchFromUrl(resourceURL);
-            const bms = bmsParser.compileString(chart);
-            bmsParser.getNotes();
-            setBmsChart(bmsParser.chart);
-            setBmsTiming(bmsParser.getTiming());
-            setBmsPositioning(bmsParser.getPositioning());
-
-            setBmsNotes(bmsParser.chart?.objects.all());
-            const data = fromBMSChart(bms, {
-                scratch: 'left',
-            });
-            setBmsKeySounds(data.keysounds);
-            setBmsNoteLoader(data.notes);
-            setBmsAutos(data.autos);
-            setIsPlaying(true); // 재생 상태 설정
-        } catch (error) {
-            console.error('BMS 리소스 로드 오류:', error);
-            alert('리소스를 로드하는 데 실패했습니다. URL이나 폴더 경로를 확인하세요.');
-        }
-    };
-
-    async function audioLoad() {
-        if (bmsKeySounds && resourceURL) {
-            console.log('모든 오디오 로딩 시작!');
-            const preloader = new AudioPreloader(removeFileName(resourceURL), bmsKeySounds, AudioLoadWorker);
-            setPreloader(preloader);
-
-            try {
-                await preloader.loadAll();
-                await preloader.decodeAll();
-            } catch (err) {
-                console.error('Audio loading error:', err);
-            }
-            console.log('모든 오디오 로딩 완료!');
-        }
-    }
     useEffect(() => {
-        if (bmsKeySounds && resourceURL) {
-            audioLoad();
+        if (bmsKeySounds && bmsAutos && bmsNotes) {
+            (async () => {
+                await configureGame();
+            })();
         }
-    }, [bmsKeySounds]);
+    }, [bmsKeySounds, bmsAutos, bmsNotes]);
     //https://bms.dotoritos.net/bms/[ginkiha]%20EOS/_eos_[LN]_l.bml
+    //https://bms.dotoritos.net/bms/%5BFreezer+feat.+%E5%A6%83%E8%8B%BA%5D+Berry+Go!!/%5BANOTHER%2B%5D.bme
     return (
         <div style={{ padding: '20px', textAlign: 'center' }}>
+            <RhythmCanvas />
             <h2>BMS Player</h2>
             <div style={{ marginBottom: '20px' }}>
                 <input type="file" ref={fileInputRef} onChange={handleFolderSelect} style={{ display: 'none' }} />
@@ -120,16 +90,12 @@ const BMSPlayer = () => {
                 />
             </div>
 
-            <button onClick={loadAndParseBMS} style={{ padding: '10px 20px', cursor: 'pointer' }}>
+            <button onClick={parseBMS} style={{ padding: '10px 20px', cursor: 'pointer' }}>
                 BMS 파싱
             </button>
 
-            <div>
-                BMS NoteLoader <JsonView src={bmsNoteLoader} />
-            </div>
-            <div>
-                BMS KeySounds <JsonView src={bmsKeySounds} />
-            </div>
+            {loadingMessage ? <div>음원 로딩: {loadingMessage}</div> : null}
+            {playTime ? <div>총 길이: {millisToMinutesAndSeconds(playTime)}</div> : null}
         </div>
     );
 };

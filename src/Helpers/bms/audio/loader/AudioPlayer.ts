@@ -121,7 +121,7 @@ export class PlayerAudio {
         markNoteAsUsed(note: SoundedEvent): void;
         resetUsedNotes(): void;
     };
-    constructor(notes: GameNote[], autos: SoundedEvent[], preloader: AudioPreloader, keySounds?: any) {
+    constructor(notes: GameNote[], autos: SoundedEvent[], preloader: AudioPreloader) {
         this._notes = createClosestNoteFinder<GameNote>(notes);
         this._autos = createClosestNoteFinder<SoundedEvent>(autos);
 
@@ -140,9 +140,9 @@ export class PlayerAudio {
 
         // 반환된 모든 노트 처리
         if (matchedNotes && matchedNotes.length > 0) {
-            matchedNotes.forEach((matchedNote) => {
+            matchedNotes.forEach(async (matchedNote) => {
                 if (matchedNote.used !== true) {
-                    this._preloader.playAudio(matchedNote.keysound.toLowerCase());
+                    await this._preloader.playAudio(matchedNote.keysound.toLowerCase());
                     this._autos.markNoteAsUsed(matchedNote);
                 }
             });
@@ -154,9 +154,9 @@ export class PlayerAudio {
 
         // 반환된 모든 노트 처리
         if (matchedNotes && matchedNotes.length > 0) {
-            matchedNotes.forEach((matchedNote) => {
+            matchedNotes.forEach(async (matchedNote) => {
                 if (matchedNote.used !== true) {
-                    this._preloader.playAudio(matchedNote.keysound.toLowerCase());
+                    await this._preloader.playAudio(matchedNote.keysound.toLowerCase());
                     this._notes.markNoteAsUsed(matchedNote);
                 }
             });
