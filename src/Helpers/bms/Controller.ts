@@ -5,7 +5,7 @@ import { AudioPreloader, FileMap } from './audio/loader/AudioPreloader';
 import { PlayerAudio } from './audio/loader/AudioPlayer';
 import { millisToMinutesAndSeconds, millisToSeconds, removeFileName } from 'Helpers/functions';
 import { GameNote, SoundedEvent } from './audio/judgements';
-import { throttle } from 'lodash';
+import { debounce, throttle } from 'lodash';
 import { RAFMonitor } from './monitor/RAFMonitor';
 
 export interface AudioSettingOptions {
@@ -143,7 +143,7 @@ export class GameController {
                 if (this.isKeySoundAutoPlay) this._playerAudio.playAutoNoteKeySound(millisToSeconds(this._nowTime));
                 this._nowSec = millisToMinutesAndSeconds(this._nowTime);
             }
-        }, 10);
+        }, 2);
         play();
     }
 

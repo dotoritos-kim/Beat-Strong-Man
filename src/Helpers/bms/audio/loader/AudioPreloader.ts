@@ -29,7 +29,7 @@ export class AudioPreloader {
         workerUrl: string,
         private onWorkerMessage?: (type: string, payload: any) => void,
     ) {
-        this.audioContext = new AudioContext({ latencyHint: 'interactive', sampleRate: 48000 });
+        this.audioContext = new AudioContext();
         this.worker = new Worker(workerUrl);
         this.worker.onmessage = (e) => {
             const { type, payload } = e.data;
@@ -112,8 +112,8 @@ export class AudioPreloader {
         this.audioWorkletNode.port.onmessage = (event) => {
             const { type, key, approxLatency } = event.data;
             if (type === 'latencyReport') {
-                const result = performance.now() - approxLatency;
-                console.log(`[Latency] track=${key}, approxLatency=${result.toFixed(3)}ms`);
+                //const result = performance.now() - approxLatency;
+                //console.log(`[Latency] track=${key}, approxLatency=${result.toFixed(3)}ms`);
             }
         };
     }

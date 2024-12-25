@@ -136,7 +136,7 @@ export class PlayerAudio {
      * - matchedNote에 사용 플래그를 추가
      */
     playAutoKeySound(currentTime: number) {
-        const matchedNotes = this._autos.getClosestNotes(currentTime, 0.02); // 여러 개의 노트 반환
+        const matchedNotes = this._autos.getClosestNotes(currentTime, 0.018); // 여러 개의 노트 반환
 
         // 반환된 모든 노트 처리
         if (matchedNotes && matchedNotes.length > 0) {
@@ -150,7 +150,7 @@ export class PlayerAudio {
     }
 
     playAutoNoteKeySound(currentTime: number) {
-        const matchedNotes = this._notes.getClosestNotes(currentTime, 0.02); // 여러 개의 노트 반환
+        const matchedNotes = this._notes.getClosestNotes(currentTime, 0.018); // 여러 개의 노트 반환
 
         // 반환된 모든 노트 처리
         if (matchedNotes && matchedNotes.length > 0) {

@@ -6,15 +6,15 @@ class AudioProcessor extends AudioWorkletProcessor {
         this.tracks = new Map();
 
         // 마스터 볼륨
-        this.masterVolume = 0.8;
+        this.masterVolume = 0.5;
 
         // 필터 관련
-        this.highpassCutoff = 20; // Hz
+        this.highpassCutoff = 40; // Hz
         this.alphaHP = this.computeAlpha(this.highpassCutoff);
         this.hpLeft = 0.0;
         this.hpRight = 0.0;
 
-        this.lowpassCutoff = 18000; // Hz
+        this.lowpassCutoff = 16000; // Hz
         this.alphaLP = this.computeAlpha(this.lowpassCutoff);
         this.lpLeft = 0.0;
         this.lpRight = 0.0;
