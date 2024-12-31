@@ -62,12 +62,14 @@ const BMSPlayer = () => {
     useEffect(() => {
         if (bmsKeySounds && bmsAutos && bmsNotes) {
             (async () => {
+                console.log(bmsNotes);
                 await configureGame();
             })();
         }
     }, [bmsKeySounds, bmsAutos, bmsNotes]);
     //https://bms.dotoritos.net/bms/[ginkiha]%20EOS/_eos_[LN]_l.bml
     //https://bms.dotoritos.net/bms/%5BFreezer+feat.+%E5%A6%83%E8%8B%BA%5D+Berry+Go!!/%5BANOTHER%2B%5D.bme
+    //https://bms.dotoritos.net/bms/%5BFreezer+feat.+%E5%A6%83%E8%8B%BA%5D+Berry+Go!!/%5BANOTHER%5D.bme
     return (
         <div style={{ padding: '20px', textAlign: 'center' }}>
             <RhythmCanvas />

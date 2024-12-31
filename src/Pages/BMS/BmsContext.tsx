@@ -6,6 +6,8 @@ import { fromBMSChart } from '@Bms/audio/judgements/NoteLoader';
 import { Timer } from 'Helpers/timer';
 import { AudioLoadWorker } from '@Bms/audio/loader/AudioLoader.worker';
 import { throttle } from 'lodash';
+import { KeyState } from '@Src/Helpers/bms/input/types';
+import { GameNote, SoundedEvent } from '@Src/Helpers/bms/audio/judgements/types';
 
 export interface Log {
     message: string;
@@ -21,16 +23,16 @@ interface BmsContextProps {
     setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
     bmsChart: BMS.BMSChart | null;
     setBmsChart: React.Dispatch<React.SetStateAction<BMS.BMSChart | null>>;
-    bmsTiming: any;
-    setBmsTiming: React.Dispatch<React.SetStateAction<any>>;
-    bmsPositioning: any;
-    setBmsPositioning: React.Dispatch<React.SetStateAction<any>>;
+    bmsTiming: BMS.Timing | null;
+    setBmsTiming: React.Dispatch<React.SetStateAction<BMS.Timing | null>>;
+    bmsPositioning: BMS.Positioning | null;
+    setBmsPositioning: React.Dispatch<React.SetStateAction<BMS.Positioning | null>>;
     bmsKeySounds: { [id: string]: string };
     setBmsKeySounds: React.Dispatch<React.SetStateAction<{ [id: string]: string }>>;
-    bmsNotes: any;
-    setBmsNotes: React.Dispatch<React.SetStateAction<any>>;
-    bmsAutos: any;
-    setBmsAutos: React.Dispatch<React.SetStateAction<any>>;
+    bmsNotes: GameNote[] | null;
+    setBmsNotes: React.Dispatch<React.SetStateAction<GameNote[] | null>>;
+    bmsAutos: SoundedEvent[] | null;
+    setBmsAutos: React.Dispatch<React.SetStateAction<SoundedEvent[] | null>>;
     fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
     resourceURL: string | null;
     setResourceURL: React.Dispatch<React.SetStateAction<string | null>>;
@@ -48,6 +50,8 @@ interface BmsContextProps {
     setIsAutoPlay: React.Dispatch<React.SetStateAction<boolean>>;
     isKeySoundAutoPlay: boolean;
     setIsKeySoundAutoPlay: React.Dispatch<React.SetStateAction<boolean>>;
+    input: Array<{ key: string; state: KeyState }>;
+    currentNotes: GameNote[] | null;
     parseBMS: () => Promise<void>;
     configureGame: () => Promise<void>;
     startGame: () => void;
@@ -61,11 +65,11 @@ export const BmsProvider = ({ children }: { children: ReactNode }) => {
     const [nowTime, setNowTime] = useState<string | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [bmsChart, setBmsChart] = useState<BMS.BMSChart | null>(null);
-    const [bmsTiming, setBmsTiming] = useState<any>(null);
-    const [bmsPositioning, setBmsPositioning] = useState<any>(null);
+    const [bmsTiming, setBmsTiming] = useState<BMS.Timing | null>(null);
+    const [bmsPositioning, setBmsPositioning] = useState<BMS.Positioning | null>(null);
     const [bmsKeySounds, setBmsKeySounds] = useState<{ [id: string]: string }>({});
-    const [bmsNotes, setBmsNotes] = useState<any>(null);
-    const [bmsAutos, setBmsAutos] = useState<any>(null);
+    const [bmsNotes, setBmsNotes] = useState<GameNote[] | null>(null);
+    const [bmsAutos, setBmsAutos] = useState<SoundedEvent[] | null>(null);
     const [controller, setController] = useState<GameController | null>(null);
     const [playTime, setPlayTime] = useState<number | null>(null);
     const [logger, setLogger] = useState<Log>({
@@ -80,27 +84,35 @@ export const BmsProvider = ({ children }: { children: ReactNode }) => {
     const [isAutoPlay, setIsAutoPlay] = useState(false);
     const [isKeySoundAutoPlay, setIsKeySoundAutoPlay] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [input, setInput] = useState<Array<{ key: string; state: KeyState }>>([]);
+    const [currentNotes, setCurrentNotes] = useState<GameNote[] | null>(null);
 
     // Callback Functions
-    const handleGameInput = useCallback(() => {
-        if (controller) {
-            setLogger({
-                message: controller._message,
-                worker: controller._workerMessage,
-                date: controller._startDate!.toISOString(),
-                now: new Date(controller._startDate!.getTime() + controller._nowTime!).toISOString(),
-                log: Timer.log,
-                warn: Timer.warningLog,
-            });
-        }
-    }, [controller, bmsKeySounds, bmsAutos, bmsNotes]);
-
-    const updateGameProgress = useCallback(
-        throttle(() => {
-            if (controller && controller._nowSec) setNowTime(controller._nowSec);
-        }, 10),
+    const handleGameInput = useCallback(
+        (message: string, keys: Array<{ key: string; state: KeyState }>) => {
+            if (controller) {
+                setInput(keys);
+                setLogger({
+                    message: controller._message,
+                    worker: controller._workerMessage,
+                    date: controller._startDate!.toISOString(),
+                    now: new Date(controller._startDate!.getTime() + controller._nowTime!).toISOString(),
+                    log: Timer.log,
+                    warn: Timer.warningLog,
+                });
+            }
+        },
         [controller, bmsKeySounds, bmsAutos, bmsNotes],
     );
+
+    const updateGameProgress = useCallback(() => {
+        throttle(() => {
+            if (controller && controller._nowSec) setNowTime(controller._nowSec);
+        }, 10)();
+        if (controller && controller._nowSec) {
+            setCurrentNotes([...controller.currentNotes]);
+        }
+    }, [controller, bmsKeySounds, bmsAutos, bmsNotes]);
 
     const handleAudioLoading = useCallback((type: string, payload: any) => {
         const { fileName, loadedCount, total } = payload;
@@ -180,6 +192,7 @@ export const BmsProvider = ({ children }: { children: ReactNode }) => {
     return (
         <BmsContext.Provider
             value={{
+                currentNotes,
                 isPlaying,
                 setIsPlaying,
                 bmsChart,
@@ -211,6 +224,7 @@ export const BmsProvider = ({ children }: { children: ReactNode }) => {
                 setIsAutoPlay,
                 isKeySoundAutoPlay,
                 setIsKeySoundAutoPlay,
+                input,
                 parseBMS,
                 configureGame,
                 startGame,

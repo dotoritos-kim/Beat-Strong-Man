@@ -151,7 +151,6 @@ export class PlayerAudio {
 
     playAutoNoteKeySound(currentTime: number) {
         const matchedNotes = this._notes.getClosestNotes(currentTime, 0.018); // 여러 개의 노트 반환
-
         // 반환된 모든 노트 처리
         if (matchedNotes && matchedNotes.length > 0) {
             matchedNotes.forEach(async (matchedNote) => {
@@ -162,6 +161,23 @@ export class PlayerAudio {
             });
         }
     }
+
+    getCurrentNote(currentTime: number) {
+        const matchedNotes = this._notes.getClosestNotes(currentTime, 0.018); // 여러 개의 노트 반환
+        const notes: GameNote[] = [];
+        // 반환된 모든 노트 처리
+        if (matchedNotes && matchedNotes.length > 0) {
+            matchedNotes.forEach((matchedNote) => {
+                if (matchedNote.used !== true) {
+                    notes.push(matchedNote);
+                    this._notes.markNoteAsUsed(matchedNote);
+                }
+            });
+            return notes;
+        }
+        return [];
+    }
+
     /**
      * resetUsedNotes
      * - 모든 노트의 사용 상태를 초기화

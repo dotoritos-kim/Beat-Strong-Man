@@ -12,15 +12,14 @@
         "strict": true,
         "forceConsistentCasingInFileNames": true,
         "noFallthroughCasesInSwitch": true,
-        "module": "CommonJS",
+        "module": "es2022",
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
         "jsx": "react-jsx",
         "sourceMap": true,
-        "types": ["webworker"],
-        "typeRoots": ["./node_modules/@types", "./src"],
+        "typeRoots": ["./node_modules/@types", "./src", "node"],
         "paths": {
             "@Src/*": ["*"],
             "@Bms/*": ["Helpers/bms/*"],
@@ -36,5 +35,6 @@
         ],
         "strictNullChecks": true
     },
+    "include": ["src/**/*", "webpack.config.ts", "src/global.d.ts"],
     "exclude": ["node_modules", "dist"]
 }

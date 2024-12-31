@@ -1,32 +1,35 @@
 // src/worker.ts
 class WorkerHandler {
     constructor() {
-        self.onmessage = (event: MessageEvent<WorkerMessage>) => this.processKeydown(event.data);
+        self.onmessage = (event) => this.processKeyEvent(event.data);
     }
 
-    private processKeydown(data: WorkerMessage): void {
-        const { key, startTime, simultaneousKeys } = data;
-        const result = `${key} 키 입력 감지됨 (Worker)`;
+    private processKeyEvent(data: { type: string; keys: string[]; startTime: number; allPressedKeys: string[]; timestamp: string }) {
+        const { type, keys, startTime, allPressedKeys, timestamp } = data;
 
-        // Web Worker의 결과와 시작 시간을 메인 스레드로 전송
-        self.postMessage({ result, startTime, simultaneousKeys } as WorkerResponse);
+        let result = '';
+        switch (type) {
+            case 'down':
+                result = `${keys.join(', ')} 키 down 처리됨 (Worker). 현재 눌린 키: ${allPressedKeys.join(', ')}. 이벤트 발생 시각: ${timestamp}`;
+                break;
+            case 'press':
+                result = `${keys.join(', ')} 키 press 처리됨 (Worker). 이벤트 발생 시각: ${timestamp}`;
+                break;
+            case 'up':
+                result = `${keys.join(', ')} 키 up 처리됨 (Worker). 현재 눌린 키: ${allPressedKeys.join(', ')}. 이벤트 발생 시각: ${timestamp}`;
+                break;
+        }
+
+        self.postMessage({
+            type,
+            result,
+            startTime,
+            keys,
+            timestamp,
+        });
     }
 }
 
-// 인터페이스 정의
-interface WorkerMessage {
-    key: string;
-    startTime: number;
-    simultaneousKeys: Map<string, boolean>;
-}
-
-interface WorkerResponse {
-    result: string;
-    startTime: number;
-    simultaneousKeys: Map<string, boolean>;
-}
-
-// Web Worker 인스턴스 생성
 const worker = new WorkerHandler();
 let code = worker.toString();
 code = code.substring(code.indexOf('{') + 1, code.lastIndexOf('}'));

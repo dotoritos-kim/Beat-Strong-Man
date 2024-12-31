@@ -1,17 +1,18 @@
 // Generated using webpack-cli https://github.com/webpack/webpack-cli
 
 import path from 'path';
-import * as webpack from 'webpack';
+import webpack, { Configuration } from 'webpack';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import 'webpack-dev-server';
-import WasmPackPlugin from '@wasm-tool/wasm-pack-plugin';
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+import { fileURLToPath } from 'url'; // 👈 추가
 const isProduction = process.env.NODE_ENV == 'production';
+const { ProvidePlugin } = webpack;
 
 const stylesHandler = MiniCssExtractPlugin.loader;
-
-const config: webpack.Configuration = {
+const __dirname = fileURLToPath(new URL('.', import.meta.url)); // 👈 추가
+const __filename = fileURLToPath(import.meta.url); // 👈 추가
+const config: Configuration = {
     entry: './src/index.tsx',
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -36,7 +37,7 @@ const config: webpack.Configuration = {
             },
         }),
         new MiniCssExtractPlugin(),
-        new webpack.ProvidePlugin({
+        new ProvidePlugin({
             process: 'process/browser',
             Buffer: ['buffer', 'Buffer'],
             'iconv-lite': 'iconv-lite',
@@ -45,16 +46,12 @@ const config: webpack.Configuration = {
     resolve: {
         alias: {
             process: 'process/browser',
-            path: require.resolve('path-browserify'),
             '@Src': path.resolve(__dirname, './src/'),
             '@Asm': path.resolve(__dirname, './src/Asm/'),
             '@Bms': path.resolve(__dirname, './src/Helpers/bms/'),
         },
         extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js', '.d.ts', '...', '.json'],
         modules: ['src', 'node_modules'],
-        fallback: {
-            buffer: require.resolve('buffer'),
-        },
     },
     module: {
         rules: [
@@ -62,9 +59,13 @@ const config: webpack.Configuration = {
                 test: /.(sass|scss|css)$/,
                 use: [stylesHandler, 'css-loader', 'postcss-loader'],
             },
+
             {
-                test: /\.wasm$/,
-                type: 'webassembly/async',
+                test: /\.worklet\.ts$/,
+                loader: 'audio-worklet-loader',
+                options: {
+                    inline: 'no-fallback',
+                },
             },
             {
                 test: /\.(js|jsx|ts|tsx)$/,
@@ -85,11 +86,11 @@ const config: webpack.Configuration = {
     },
 };
 
-module.exports = () => {
+export default (() => {
     if (isProduction) {
         config.mode = 'production';
     } else {
         config.mode = 'development';
     }
     return config;
-};
+})();

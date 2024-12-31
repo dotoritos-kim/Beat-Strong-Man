@@ -1,133 +1,162 @@
 import { Timer } from 'Helpers/timer';
 import worker from './worker';
-
+import { UpdateOutputCallback, KeyState, WorkerResponse, KeyEventType, WorkerMessage } from './types';
 export class MainThread {
     private worker: Worker;
-    private keyQueue: { key: string; timestamp: number }[]; // 키 입력 큐
-    private isProcessing: boolean; // 큐 처리 여부
-    private updateOutput: (message: string, keys: string[]) => void; // 출력 상태 업데이트 함수
-    private keysPressed = new Map<string, boolean>();
+    private updateOutput: UpdateOutputCallback;
+    private lastProcessTime: number;
+    private processingInterval: number;
 
-    private now = 0;
-    private delta = 0;
-    private then = Date.now();
-    private frames = 0;
-    private oldtime = 0;
-    private fps = 240;
+    private keyStates: Map<string, KeyState>;
+    private pressedKeys: Set<string>;
+    private heldKeys: Set<string>;
 
-    private simultaneousKeys = new Map<string, boolean>();
-    constructor(updateOutput: (message: string, keys: string[]) => void) {
+    private readonly keys: string[] = ['a', 's', 'd', 'f', 'j', 'k', 'l', ';'];
+
+    constructor(updateOutput: UpdateOutputCallback) {
         this.worker = new Worker(worker);
-        this.keyQueue = [];
-        this.isProcessing = false;
         this.updateOutput = updateOutput;
+        this.lastProcessTime = 0;
+        this.processingInterval = 0.001;
 
-        // Web Worker의 메시지를 받을 리스너 설정
+        this.keyStates = new Map();
+        this.pressedKeys = new Set();
+        this.heldKeys = new Set();
+
+        this.initializeKeyStates(); // 키 상태 초기화
+
+        this.setupWorkerMessageHandler();
+        this.setupKeyboardListeners();
+        this.startKeyPressLoop();
+    }
+
+    private initializeKeyStates(): void {
+        this.keys.forEach((key) => {
+            this.keyStates.set(key, {
+                isPressed: false,
+                downTime: 0,
+                upTime: 0,
+                pressTime: 0,
+                isHeld: false,
+                stateDescription: 'Released',
+            });
+        });
+    }
+
+    private setupWorkerMessageHandler(): void {
         this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
             this.handleWorkerResponse(event.data);
         };
+    }
 
-        // 키보드 이벤트 리스너 등록
-        document.addEventListener('keydown', (event) => this.handleKeydown(event));
-        document.addEventListener('keyup', (event) => this.handleKeyUp(event));
+    private setupKeyboardListeners(): void {
+        document.addEventListener('keydown', this.handleKeydown.bind(this));
+        document.addEventListener('keyup', this.handleKeyup.bind(this));
     }
 
     private handleKeydown(event: KeyboardEvent): void {
         const key = event.key;
-        const timestamp = performance.now();
-        this.keyQueue.push({ key, timestamp }); // 키와 타임스탬프를 큐에 저장
-        Timer.start('down');
-        // 큐 처리 시작
-        if (!this.isProcessing) {
-            this.processQueue('down');
+        const now = performance.now(); // 현재 시간 기록
+
+        if (!this.keys.includes(key)) return;
+
+        const state = this.keyStates.get(key)!;
+        if (!state.isPressed) {
+            state.isPressed = true;
+            state.downTime = now; // 새로운 downTime 기록
+            state.upTime = 0; // upTime 초기화
+            state.pressTime = now;
+            state.isHeld = false;
+            state.stateDescription = 'Pressed';
+            this.pressedKeys.add(key);
+            this.processKeys('down', new Set([key]));
+        } else if (!state.isHeld && now - state.pressTime > 1) {
+            state.isHeld = true;
+            state.stateDescription = 'Held';
+            this.heldKeys.add(key);
         }
     }
-    private handleKeyUp(event: KeyboardEvent): void {
+
+    private handleKeyup(event: KeyboardEvent): void {
         const key = event.key;
-        const timestamp = performance.now();
-        this.keyQueue.push({ key, timestamp }); // 키와 타임스탬프를 큐에 저장
-        this.keysPressed.delete(key);
-        // 큐 처리 시작
-        if (!this.isProcessing) {
-            this.processQueue('up');
-        }
+        const now = performance.now(); // 현재 시간 기록
+
+        if (!this.keys.includes(key)) return;
+
+        const state = this.keyStates.get(key)!;
+
+        state.isPressed = false;
+        state.pressTime = 0;
+        state.isHeld = false;
+        state.stateDescription = 'Released';
+        state.upTime = now; // 새로운 upTime 기록
+
+        this.pressedKeys.delete(key);
+        this.heldKeys.delete(key);
+
+        const keyStateEntry = { key, state };
+        this.updateOutput(`키 "${key}"가 up 이벤트로 해제되었습니다. (눌린 시간: ${now - state.downTime}ms)`, [key], [keyStateEntry]);
+
+        // up 이벤트 처리
+        this.processKeys('up', new Set([key]));
     }
 
-    private async processQueue(type: 'down' | 'up'): Promise<void> {
-        this.isProcessing = true;
-
-        while (this.keyQueue.length > 0) {
-            while (this.keyQueue.length > 0) {
-                this.simultaneousKeys.set(this.keyQueue.shift()!.key, true);
+    private startKeyPressLoop(): void {
+        const processPress = () => {
+            if (this.heldKeys.size > 0) {
+                this.processKeys('press', this.heldKeys);
             }
+            requestAnimationFrame(processPress);
+        };
+        requestAnimationFrame(processPress);
+    }
 
-            const pressCheckKeys = this.simultaneousKeys
-                .keys()
-                .toArray()
-                .filter((value) => {
-                    if (this.keysPressed.get(value)) {
-                        return false;
-                    } else {
-                        return true;
-                    }
-                });
-            if (pressCheckKeys.length > 0) {
-                const keys = pressCheckKeys.join(', ');
-                const workerStartTime = performance.now();
+    private processKeys(type: KeyEventType, keys: Set<string>): void {
+        const now = performance.now();
+        if (now - this.lastProcessTime < this.processingInterval) {
+            return;
+        }
+        this.lastProcessTime = now;
 
-                // Web Worker로 키 이벤트 전달
-                this.worker.postMessage({ key: keys, startTime: workerStartTime } as WorkerMessage);
+        if (keys.size > 0) {
+            const keyArray = Array.from(keys);
+            this.worker.postMessage({
+                type,
+                keys: keyArray,
+                startTime: now,
+                allPressedKeys: Array.from(this.pressedKeys),
+            } as WorkerMessage);
 
-                if (type === 'down') {
-                    this.simultaneousKeys.forEach((value, key) => {
-                        this.keysPressed.set(key, true);
-                    });
-                }
-                if (type === 'up') {
-                    pressCheckKeys.forEach((value) => {
-                        this.simultaneousKeys.delete(value);
-                    });
-                }
-                // 메인 스레드의 레이턴시 측정
-                const mainResult = `${keys} 키 ${type} 감지됨. 현재: ${[...this.simultaneousKeys.entries()]}`;
-                this.logOutput(mainResult, 0, '메인 스레드', this.simultaneousKeys.keys().toArray());
-            }
+            const mainResult = `${keyArray.join(', ')} 키 ${type} 감지됨`;
+            this.logOutput(mainResult, 0, '메인 스레드', keyArray);
         }
 
-        this.isProcessing = false;
+        const keyStates = Array.from(this.keyStates.entries()).map(([key, state]) => ({
+            key,
+            state,
+        }));
+
+        this.updateOutput(`현재 ${keys.size}개의 키가 ${type} 상태입니다.`, keys.size > 0 ? Array.from(keys) : [], keyStates);
     }
 
     private handleWorkerResponse(data: WorkerResponse): void {
-        const { result, startTime } = data;
-        const workerLatency = performance.now() - startTime;
-        this.logOutput(result, workerLatency, 'Web Worker', [result]);
+        const { result, startTime, type, keys } = data;
+        const latency = performance.now() - startTime;
+        this.logOutput(result, latency, 'Web Worker', keys);
     }
 
     private logOutput(message: string, latency: number, source: string, keys: string[]): void {
-        const currentDate = new Date();
-        const formattedTime = currentDate.toLocaleTimeString('ko-KR', { hour12: true });
-        const microTime = (performance.now() % 1000).toFixed(3);
+        const now = new Date();
+        const time = now.toLocaleTimeString('ko-KR', { hour12: true });
+        const ms = (performance.now() % 1000).toFixed(3);
 
-        const log = `[${formattedTime}.${microTime}] ${message}\n${source} 입력 처리 레이턴시: ${Timer.benchMark.get('down')} ms\n`;
-        this.updateOutput(log, keys);
+        const log = `[${time}.${ms}] ${message}\n${source} 입력 처리 레이턴시: ${Timer.benchMark.get('down')} ms\n`;
+        this.updateOutput(log, keys, []);
     }
 
-    // Web Worker 종료 메서드 추가
     public terminateWorker(): void {
         this.worker.terminate();
-        document.removeEventListener('keypress', (event) => this.handleKeydown(event));
-        document.removeEventListener('keyup', (event) => this.handleKeydown(event));
-
-        console.log('Web Worker가 종료되었습니다.');
+        document.removeEventListener('keydown', this.handleKeydown.bind(this));
+        document.removeEventListener('keyup', this.handleKeyup.bind(this));
     }
-}
-
-interface WorkerMessage {
-    key: string;
-    startTime: number;
-}
-
-interface WorkerResponse {
-    result: string;
-    startTime: number;
 }

@@ -5,6 +5,8 @@
  *  - 메인 스레드 = decodeAudioData & AudioWorklet 재생
  *  - 멀티 트랙, 마스터 볼륨 & 로우패스 필터 적용
  */
+import AudioProcessor from './AudioProcessor.worklet';
+import { AudioProcessorPostMessage, DriveSettings, DynamicsSettings, EffectsSettings, EQBand, ModulationSettings } from './types';
 
 export interface FileMap {
     [key: string]: string; // 예: { "kick": "kick.wav", "bgm": "bgm.ogg" }
@@ -104,24 +106,18 @@ export class AudioPreloader {
     }
 
     public async initAudioWorklet(moduleUrl: string) {
-        await this.audioContext.audioWorklet.addModule(moduleUrl);
+        await this.audioContext.audioWorklet.addModule(AudioProcessor);
         this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'audio-worklet-processor');
         this.audioWorkletNode.connect(this.audioContext.destination);
 
-        // 레이턴시 보고 수신
         this.audioWorkletNode.port.onmessage = (event) => {
-            const { type, key, approxLatency } = event.data;
+            const { type, key, data } = event.data;
             if (type === 'latencyReport') {
-                //const result = performance.now() - approxLatency;
-                //console.log(`[Latency] track=${key}, approxLatency=${result.toFixed(3)}ms`);
+                console.log(`[Latency Report] Track=${key}, Latency=${data?.latency ?? 'Unknown'}`);
             }
         };
     }
 
-    /**
-     * 음원 재생 (멀티 트랙)
-     * - loop: 루프 재생 여부
-     */
     public playAudio(key: string, loop = false) {
         if (!this.audioWorkletNode) {
             console.error('AudioWorkletNode not initialized.');
@@ -132,22 +128,49 @@ export class AudioPreloader {
             console.warn(`No AudioBuffer for key=${key}`);
             return;
         }
-        // resume
         if (this.audioContext.state === 'suspended') {
             this.audioContext.resume();
         }
 
-        // 단순 모노
         const float32Data = audioBuffer.getChannelData(0).slice(0);
 
-        const nowMs = performance.now();
-        this.audioWorkletNode.port.postMessage({
+        this.postTypedMessage<AudioProcessorPostMessage>({
             type: 'play',
             key,
-            data: float32Data,
-            loop,
-            userStartTimeSec: nowMs,
+            data: { buffer: float32Data, loop },
         });
+    }
+
+    public adjustVolume(key: string, volume: number) {
+        this.postTypedMessage({ type: 'adjustVolume', key, data: volume });
+    }
+
+    public adjustEQ(key: string, bandSettings: EQBand[]) {
+        this.postTypedMessage({ type: 'adjustEQ', key, data: bandSettings });
+    }
+
+    public adjustModulation(key: string, settings: ModulationSettings) {
+        this.postTypedMessage({ type: 'adjustModulation', key, data: settings });
+    }
+
+    public adjustEffects(key: string, settings: EffectsSettings) {
+        this.postTypedMessage({ type: 'adjustEffects', key, data: settings });
+    }
+
+    public adjustDrive(key: string, settings: DriveSettings) {
+        this.postTypedMessage({ type: 'adjustDrive', key, data: settings });
+    }
+
+    public adjustDynamics(key: string, settings: DynamicsSettings) {
+        this.postTypedMessage({ type: 'adjustDynamics', key, data: settings });
+    }
+
+    private postTypedMessage<T>(message: T, options?: StructuredSerializeOptions): void {
+        if (!this.audioWorkletNode) {
+            console.error('AudioWorkletNode not initialized.');
+            return;
+        }
+        this.audioWorkletNode.port.postMessage(message, options);
     }
 
     public releaseAllResources(): void {
@@ -159,7 +182,6 @@ export class AudioPreloader {
         console.log('[Main] All resources released.');
     }
 
-    // Getter (progress, etc.)
     public get progress() {
         return this.loadingProgress;
     }
