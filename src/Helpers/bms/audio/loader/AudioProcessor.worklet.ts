@@ -1,6 +1,5 @@
 import { AudioProcessorPostMessage, DriveSettings, DynamicsSettings, EffectsSettings, EQBand, ModulationSettings, Track } from './types';
 
-// Add initial settings interfaces with existing types
 interface InitialSettings {
     eq: EQBand[];
     modulation: ModulationSettings;
@@ -18,7 +17,6 @@ class AudioProcessor extends AudioWorkletProcessor {
     private driveSettings: Map<string, DriveSettings>;
     private dynamicsSettings: Map<string, DynamicsSettings>;
 
-    // Define initial settings based on given interfaces
     private readonly initialSettings: InitialSettings = {
         eq: [
             { frequency: 60, gain: 0 },

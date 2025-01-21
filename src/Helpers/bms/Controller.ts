@@ -144,7 +144,7 @@ export class GameController {
             if (this._playerAudio && this.isAudioReady && this._nowTime) {
                 if (this.isAutoPlay) this._playerAudio.playAutoKeySound(millisToSeconds(this._nowTime));
                 if (this.isKeySoundAutoPlay) this._playerAudio.playAutoNoteKeySound(millisToSeconds(this._nowTime));
-                this.currentNotes = this._playerAudio.getCurrentNote(millisToSeconds(this._nowTime));
+                this.currentNotes = this._playerAudio.getCurrentNote(millisToSeconds(this._nowTime) + 3);
                 this._nowSec = millisToMinutesAndSeconds(this._nowTime);
             }
         }, 2);

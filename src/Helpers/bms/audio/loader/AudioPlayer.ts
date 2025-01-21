@@ -97,6 +97,10 @@ export function createClosestNoteFinder<T extends GameNote | SoundedEvent>(origi
             (note as any).used = true; // 동적으로 플래그 추가
         },
 
+        markGetNoteAsUsed(note: T) {
+            (note as any).get = true; // 동적으로 플래그 추가
+        },
+
         /**
          * resetUsedNotes
          * - 모든 노트의 사용 상태를 초기화
@@ -114,11 +118,13 @@ export class PlayerAudio {
     private _notes: {
         getClosestNotes(currentTime: number, tolerance?: number): GameNote[] | null;
         markNoteAsUsed(note: GameNote): void;
+        markGetNoteAsUsed(note: GameNote): void;
         resetUsedNotes(): void;
     };
     private _autos: {
         getClosestNotes(currentTime: number, tolerance?: number): SoundedEvent[] | null;
         markNoteAsUsed(note: SoundedEvent): void;
+        markGetNoteAsUsed(note: SoundedEvent): void;
         resetUsedNotes(): void;
     };
     constructor(notes: GameNote[], autos: SoundedEvent[], preloader: AudioPreloader) {
@@ -163,14 +169,14 @@ export class PlayerAudio {
     }
 
     getCurrentNote(currentTime: number) {
-        const matchedNotes = this._notes.getClosestNotes(currentTime, 0.018); // 여러 개의 노트 반환
+        const matchedNotes = this._notes.getClosestNotes(currentTime, 0.2); // 여러 개의 노트 반환
         const notes: GameNote[] = [];
         // 반환된 모든 노트 처리
         if (matchedNotes && matchedNotes.length > 0) {
             matchedNotes.forEach((matchedNote) => {
-                if (matchedNote.used !== true) {
+                if (matchedNote.get !== true) {
                     notes.push(matchedNote);
-                    this._notes.markNoteAsUsed(matchedNote);
+                    this._notes.markGetNoteAsUsed(matchedNote);
                 }
             });
             return notes;

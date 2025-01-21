@@ -40,6 +40,8 @@ interface BmsContextProps {
     setController: React.Dispatch<React.SetStateAction<GameController | null>>;
     nowTime: string | null;
     setNowTime: React.Dispatch<React.SetStateAction<string | null>>;
+    nowTimeMill: number | null;
+    setNowTimeMill: React.Dispatch<React.SetStateAction<number | null>>;
     logger: Log;
     setLogger: React.Dispatch<React.SetStateAction<Log>>;
     playTime: number | null;
@@ -63,6 +65,7 @@ export const BmsContext = createContext<BmsContextProps | null>(null);
 export const BmsProvider = ({ children }: { children: ReactNode }) => {
     const [resourceURL, setResourceURL] = useState<string | null>(null);
     const [nowTime, setNowTime] = useState<string | null>(null);
+    const [nowTimeMill, setNowTimeMill] = useState<number | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [bmsChart, setBmsChart] = useState<BMS.BMSChart | null>(null);
     const [bmsTiming, setBmsTiming] = useState<BMS.Timing | null>(null);
@@ -108,6 +111,7 @@ export const BmsProvider = ({ children }: { children: ReactNode }) => {
     const updateGameProgress = useCallback(() => {
         throttle(() => {
             if (controller && controller._nowSec) setNowTime(controller._nowSec);
+            if (controller && controller._nowTime) setNowTimeMill(controller._nowTime);
         }, 10)();
         if (controller && controller._nowSec) {
             setCurrentNotes([...controller.currentNotes]);
@@ -229,6 +233,8 @@ export const BmsProvider = ({ children }: { children: ReactNode }) => {
                 configureGame,
                 startGame,
                 destroyGame,
+                nowTimeMill,
+                setNowTimeMill,
             }}
         >
             {children}

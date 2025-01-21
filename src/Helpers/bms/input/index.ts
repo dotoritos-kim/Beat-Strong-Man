@@ -11,7 +11,7 @@ export class MainThread {
     private pressedKeys: Set<string>;
     private heldKeys: Set<string>;
 
-    private readonly keys: string[] = ['a', 's', 'd', 'f', 'j', 'k', 'l', ';'];
+    private readonly keys: string[] = ['a', 's', 'd', 'f', ' ', 'k', 'l', ';'];
 
     constructor(updateOutput: UpdateOutputCallback) {
         this.worker = new Worker(worker);
